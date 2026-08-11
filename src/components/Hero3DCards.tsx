@@ -81,7 +81,7 @@ export default function Hero3DCards() {
 
   return (
     <section className="relative min-h-[80vh] pt-28 pb-12 flex flex-col justify-center items-center overflow-hidden">
-      {/* Apple-style background ambient radial lighting (Pure CSS, 0% CPU overhead) */}
+      {/* Apple Ambient Glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-[radial-gradient(circle_at_center,_rgba(0,115,165,0.15)_0%,_rgba(21,207,157,0.1)_35%,_rgba(0,0,0,0)_70%)] pointer-events-none" />
 
       <div className="w-full max-w-7xl px-4 text-center z-10 mb-8">
@@ -93,31 +93,38 @@ export default function Hero3DCards() {
         </p>
       </div>
 
-      {/* ================= DESKTOP APPLE-STYLE 4 CARDS (>= 768px) ================= */}
-      <div className="hidden md:flex w-full max-w-6xl px-4 justify-center py-4">
+      {/* ================= DESKTOP APPLE PURE CSS 3D CARDS (>= 768px) ================= */}
+      <div className="hidden md:flex w-full max-w-6xl px-4 justify-center py-4" style={{ perspective: "1200px" }}>
         <div className="grid grid-cols-4 gap-6 w-full max-w-5xl">
           {CARDS.map((card) => (
             <a
               key={card.id}
               href={card.href}
-              className="group relative h-96 rounded-3xl overflow-hidden border border-white/10 bg-zinc-900/90 shadow-2xl transition-all duration-300 hover:-translate-y-2 hover:border-white/40 hover:shadow-[0_20px_40px_rgba(0,0,0,0.8)] flex flex-col justify-between p-5 transform-gpu"
+              className="group relative h-96 rounded-3xl overflow-hidden border border-white/15 bg-zinc-900/90 shadow-2xl transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-3 hover:rotate-x-3 hover:rotate-y-[-4deg] hover:border-white/40 hover:shadow-[0_25px_50px_rgba(0,0,0,0.9)] flex flex-col justify-between p-5 transform-gpu"
+              style={{
+                transformStyle: "preserve-3d",
+              }}
             >
-              {/* Background cover image */}
+              {/* Layer 1: Background cover */}
               <div
-                className="absolute inset-0 opacity-25 group-hover:opacity-45 transition-opacity duration-300 bg-cover bg-center pointer-events-none"
+                className="absolute inset-0 opacity-25 group-hover:opacity-45 transition-opacity duration-500 bg-cover bg-center pointer-events-none"
                 style={{
                   backgroundImage: card.bgImg ? `url('${card.bgImg}')` : undefined,
+                  transform: "translateZ(0px)",
                 }}
               />
 
-              {/* Accent glow on hover */}
+              {/* Layer 2: Ambient glow */}
               <div
                 className="absolute -inset-1 opacity-0 group-hover:opacity-30 blur-2xl transition-opacity duration-500 rounded-3xl pointer-events-none"
                 style={{ backgroundColor: card.accentColor }}
               />
 
-              {/* Badge */}
-              <div className="relative z-10 flex justify-between items-center">
+              {/* Layer 3: Badge */}
+              <div
+                className="relative z-10 flex justify-between items-center transition-transform duration-500 group-hover:translate-z-6"
+                style={{ transform: "translateZ(20px)" }}
+              >
                 <span
                   className="text-[10px] uppercase font-mono tracking-widest px-3 py-1 rounded-full text-white bg-black/60 border border-white/10"
                   style={{ borderLeftColor: card.accentColor, borderLeftWidth: "3px" }}
@@ -126,21 +133,27 @@ export default function Hero3DCards() {
                 </span>
               </div>
 
-              {/* Central Cat Character */}
-              <div className="relative z-10 flex-1 flex items-center justify-center py-2">
-                <div className="relative w-44 h-44 transition-transform duration-300 group-hover:scale-110">
+              {/* Layer 4: 3D Popping Cat Character */}
+              <div
+                className="relative z-10 flex-1 flex items-center justify-center py-2 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
+                style={{ transform: "translateZ(45px)" }}
+              >
+                <div className="relative w-44 h-44 transition-transform duration-500 group-hover:scale-115">
                   <Image
                     src={card.catImg}
                     alt={card.title}
                     fill
-                    className="object-contain filter drop-shadow-xl"
+                    className="object-contain filter drop-shadow-[0_15px_25px_rgba(0,0,0,0.8)]"
                     priority
                   />
                 </div>
               </div>
 
-              {/* Card Title */}
-              <div className="relative z-10 text-center pt-3 border-t border-white/10">
+              {/* Layer 5: Card Title */}
+              <div
+                className="relative z-10 text-center pt-3 border-t border-white/10 transition-transform duration-500"
+                style={{ transform: "translateZ(30px)" }}
+              >
                 <span
                   className="text-xl font-extrabold uppercase tracking-widest block transition-colors duration-300 group-hover:text-white"
                   style={{ color: card.accentColor }}
@@ -153,12 +166,13 @@ export default function Hero3DCards() {
         </div>
       </div>
 
-      {/* ================= MOBILE APPLE-STYLE SCROLL SNAP SLIDER (< 768px) ================= */}
+      {/* ================= MOBILE APPLE PURE CSS 3D SNAP SLIDER (< 768px) ================= */}
       <div className="md:hidden w-full max-w-sm px-4 flex flex-col items-center">
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
           className="w-full flex overflow-x-auto snap-x snap-mandatory scrollbar-none py-4 space-x-4 scroll-smooth"
+          style={{ perspective: "1000px" }}
         >
           {CARDS.map((card, idx) => (
             <div
@@ -167,8 +181,9 @@ export default function Hero3DCards() {
             >
               <a
                 href={card.href}
-                className="group relative w-72 sm:w-80 h-[400px] rounded-3xl overflow-hidden border border-white/20 bg-zinc-950/90 shadow-2xl flex flex-col justify-between p-6 transform-gpu"
+                className="group relative w-72 sm:w-80 h-[400px] rounded-3xl overflow-hidden border border-white/20 bg-zinc-950/90 shadow-2xl flex flex-col justify-between p-6 transform-gpu active:scale-95 transition-all duration-300"
                 style={{
+                  transformStyle: "preserve-3d",
                   boxShadow: `0 15px 35px -5px ${card.accentColor}44`,
                 }}
               >
@@ -186,7 +201,10 @@ export default function Hero3DCards() {
                 />
 
                 {/* Badge */}
-                <div className="relative z-10 flex justify-between items-center">
+                <div
+                  className="relative z-10 flex justify-between items-center"
+                  style={{ transform: "translateZ(15px)" }}
+                >
                   <span
                     className="text-xs uppercase font-mono tracking-widest px-3 py-1 rounded-full text-white bg-black/70 border border-white/20"
                     style={{ borderLeftColor: card.accentColor, borderLeftWidth: "3px" }}
@@ -198,21 +216,27 @@ export default function Hero3DCards() {
                   </span>
                 </div>
 
-                {/* Central Character Image */}
-                <div className="relative z-10 flex-1 flex items-center justify-center py-2">
+                {/* Central 3D Cat Character */}
+                <div
+                  className="relative z-10 flex-1 flex items-center justify-center py-2"
+                  style={{ transform: "translateZ(40px)" }}
+                >
                   <div className="relative w-44 h-44">
                     <Image
                       src={card.catImg}
                       alt={card.title}
                       fill
-                      className="object-contain filter drop-shadow-xl"
+                      className="object-contain filter drop-shadow-[0_12px_20px_rgba(0,0,0,0.8)]"
                       priority
                     />
                   </div>
                 </div>
 
                 {/* Card Title */}
-                <div className="relative z-10 text-center pt-3 border-t border-white/20">
+                <div
+                  className="relative z-10 text-center pt-3 border-t border-white/20"
+                  style={{ transform: "translateZ(25px)" }}
+                >
                   <span
                     className="text-2xl font-black uppercase tracking-widest block"
                     style={{ color: card.accentColor }}
@@ -225,7 +249,7 @@ export default function Hero3DCards() {
           ))}
         </div>
 
-        {/* Mobile Navigation Controls (Dots & Arrows - Manual Only) */}
+        {/* Mobile Navigation Controls */}
         <div className="flex items-center space-x-4 mt-2">
           <button
             onClick={() => scrollToCard((mobileActiveIndex - 1 + CARDS.length) % CARDS.length)}
