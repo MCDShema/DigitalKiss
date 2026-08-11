@@ -13,6 +13,8 @@ export default function ParticlesBackground() {
     if (!ctx) return;
 
     let animationFrameId: number;
+    let isMobile = window.innerWidth < 768;
+
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
 
@@ -20,11 +22,13 @@ export default function ParticlesBackground() {
       if (!canvas) return;
       width = canvas.width = window.innerWidth;
       height = canvas.height = window.innerHeight;
+      isMobile = window.innerWidth < 768;
     };
 
     window.addEventListener("resize", handleResize);
 
-    const numParticles = Math.min(Math.floor((width * height) / 18000), 75);
+    // Lightweight particle count (15 on mobile, 35 on desktop)
+    const numParticles = isMobile ? 15 : 35;
     const particles: Array<{
       x: number;
       y: number;
@@ -41,18 +45,18 @@ export default function ParticlesBackground() {
       particles.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 0.6,
-        vy: (Math.random() - 0.5) * 0.6,
-        radius: Math.random() * 2 + 1,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: (Math.random() - 0.5) * 0.4,
+        radius: Math.random() * 1.5 + 1,
         color: colors[Math.floor(Math.random() * colors.length)],
-        alpha: Math.random() * 0.5 + 0.2,
+        alpha: Math.random() * 0.4 + 0.2,
       });
     }
 
     const render = () => {
       ctx.clearRect(0, 0, width, height);
 
-      // Draw background particles & ambient lines
+      // Fast render without expensive shadowBlur
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
         p.x += p.vx;
@@ -67,22 +71,23 @@ export default function ParticlesBackground() {
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
         ctx.fillStyle = p.color;
         ctx.globalAlpha = p.alpha;
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = p.color;
         ctx.fill();
 
+        // Connect nearby particles (lightweight distance check)
         for (let j = i + 1; j < particles.length; j++) {
           const p2 = particles[j];
           const dx = p.x - p2.x;
           const dy = p.y - p2.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
+          const distSq = dx * dx + dy * dy;
 
-          if (dist < 110) {
+          if (distSq < 10000) {
+            // 100px squared
+            const dist = Math.sqrt(distSq);
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(p2.x, p2.y);
             ctx.strokeStyle = p.color;
-            ctx.globalAlpha = (1 - dist / 110) * 0.12;
+            ctx.globalAlpha = (1 - dist / 100) * 0.1;
             ctx.stroke();
           }
         }
@@ -103,7 +108,7 @@ export default function ParticlesBackground() {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-0"
+      className="fixed inset-0 pointer-events-none z-0 opacity-70"
     />
   );
 }
