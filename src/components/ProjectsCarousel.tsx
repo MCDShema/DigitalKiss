@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { Mail, Send, ChevronRight, ChevronLeft } from "lucide-react";
+import { Mail, Send, ChevronUp, ChevronDown } from "lucide-react";
 
 interface ProjectTab {
   id: string;
@@ -94,7 +94,7 @@ const TABS: ProjectTab[] = [
     mediaType: "image",
     mediaUrl: "/images/Games.jpg",
     description: [
-      "Розробка ігрового рушія для веб та мобільних платформ.",
+      "Розробка ігрового движка для веб та мобільних платформ.",
       "Розробка графіки та звуку для веб та мобільних ігор.",
       "Розробка механіки гри та її інтеграція з платформами iOS, Android, HTML5.",
       "Підтримка та оновлення після релізу.",
@@ -118,87 +118,95 @@ const TABS: ProjectTab[] = [
 
 export default function ProjectsCarousel() {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isRotating, setIsRotating] = useState(false);
-  const [rotationDegree, setRotationDegree] = useState(0);
+  const [nextIndex, setNextIndex] = useState<number | null>(null);
+  const [spinDirection, setSpinDirection] = useState<"fwd" | "bwd" | null>(null);
+  const [isSpinning, setIsSpinning] = useState(false);
 
-  const currentTab = TABS[activeIndex];
+  const spinTo = (targetIdx: number) => {
+    if (isSpinning || targetIdx === activeIndex) return;
 
-  const changeTab = (newIndex: number, direction: "next" | "prev" = "next") => {
-    if (isRotating || newIndex === activeIndex) return;
-    setIsRotating(true);
-    setRotationDegree((prev) => (direction === "next" ? prev - 90 : prev + 90));
+    const dir = targetIdx > activeIndex ? "fwd" : "bwd";
+    setNextIndex(targetIdx);
+    setSpinDirection(dir);
+    setIsSpinning(true);
 
+    // After 3D rotation duration (1000ms), finalize active tab
     setTimeout(() => {
-      setActiveIndex(newIndex);
-      setIsRotating(false);
-    }, 400);
+      setActiveIndex(targetIdx);
+      setNextIndex(null);
+      setSpinDirection(null);
+      setIsSpinning(false);
+    }, 950);
   };
 
-  const nextTab = () => {
+  const handleNext = () => {
     const nextIdx = (activeIndex + 1) % TABS.length;
-    changeTab(nextIdx, "next");
+    spinTo(nextIdx);
   };
 
-  const prevTab = () => {
+  const handlePrev = () => {
     const prevIdx = (activeIndex - 1 + TABS.length) % TABS.length;
-    changeTab(prevIdx, "prev");
+    spinTo(prevIdx);
   };
 
   useEffect(() => {
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === "ArrowDown" || e.key === "ArrowRight") nextTab();
-      if (e.key === "ArrowUp" || e.key === "ArrowLeft") prevTab();
+      if (e.keyCode === 40 || e.keyCode === 39) handleNext(); // Down / Right
+      if (e.keyCode === 38 || e.keyCode === 37) handlePrev(); // Up / Left
     };
     window.addEventListener("keyup", handleKeyUp);
     return () => window.removeEventListener("keyup", handleKeyUp);
-  }, [activeIndex, isRotating]);
+  }, [activeIndex, isSpinning]);
+
+  const currentTab = TABS[activeIndex];
+  const incomingTab = nextIndex !== null ? TABS[nextIndex] : null;
 
   return (
-    <section id="projects" className="py-20 relative z-10 overflow-hidden">
+    <section id="projects" className="py-16 relative z-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-end mb-10 border-b border-zinc-800 pb-4">
+        <div className="flex justify-between items-end mb-8 border-b border-zinc-800 pb-4">
           <div>
-            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-mono uppercase tracking-widest mb-2">
-              <span>3D SPINNER GALLERY</span>
-            </div>
             <h2 className="text-3xl sm:text-5xl font-extrabold uppercase tracking-tight text-white">
-              Projects &amp; Services
+              PROJECTS
             </h2>
           </div>
           <div className="hidden sm:flex items-center space-x-2">
             <button
-              onClick={prevTab}
-              className="p-3 rounded-full bg-zinc-900 border border-zinc-800 hover:border-cyan-500 text-white transition-all hover:scale-110 shadow-lg"
-              aria-label="Previous Project (Arrow Up/Left)"
+              onClick={handlePrev}
+              disabled={isSpinning}
+              className="p-3 rounded-full bg-zinc-900 border border-zinc-800 hover:border-cyan-500 text-white transition-all hover:scale-110 disabled:opacity-50"
+              aria-label="Spin Up"
             >
-              <ChevronLeft size={22} />
+              <ChevronUp size={22} />
             </button>
             <button
-              onClick={nextTab}
-              className="p-3 rounded-full bg-zinc-900 border border-zinc-800 hover:border-cyan-500 text-white transition-all hover:scale-110 shadow-lg"
-              aria-label="Next Project (Arrow Down/Right)"
+              onClick={handleNext}
+              disabled={isSpinning}
+              className="p-3 rounded-full bg-zinc-900 border border-zinc-800 hover:border-cyan-500 text-white transition-all hover:scale-110 disabled:opacity-50"
+              aria-label="Spin Down"
             >
-              <ChevronRight size={22} />
+              <ChevronDown size={22} />
             </button>
           </div>
         </div>
 
-        {/* 3D Category Control Buttons */}
-        <div className="flex flex-wrap gap-2 mb-10 justify-center sm:justify-start">
+        {/* 3D Controls Menu */}
+        <div className="flex flex-wrap gap-2 mb-8 justify-center sm:justify-start">
           {TABS.map((tab, idx) => {
             const isActive = idx === activeIndex;
             return (
               <button
                 key={tab.id}
-                onClick={() => changeTab(idx, idx > activeIndex ? "next" : "prev")}
+                onClick={() => spinTo(idx)}
+                disabled={isSpinning}
                 className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-wider transition-all duration-300 ${
                   isActive
-                    ? "scale-105 shadow-xl text-white ring-2 ring-white/20"
+                    ? "scale-105 shadow-xl text-white border-2 border-white/40"
                     : "bg-zinc-900/80 text-zinc-400 hover:text-white border border-zinc-800"
                 }`}
                 style={{
                   backgroundColor: isActive ? tab.color : undefined,
-                  boxShadow: isActive ? `0 10px 25px -5px ${tab.color}88` : undefined,
+                  boxShadow: isActive ? `0 8px 24px -4px ${tab.color}bb` : undefined,
                 }}
               >
                 {tab.menu}
@@ -207,22 +215,30 @@ export default function ProjectsCarousel() {
           })}
         </div>
 
-        {/* 3D Perspective Spinner Stage */}
-        <div
-          className="relative w-full py-4"
-          style={{ perspective: "1600px" }}
-        >
-          <div
-            className="w-full rounded-3xl overflow-hidden border border-zinc-800/80 bg-zinc-950/90 backdrop-blur-xl shadow-2xl transition-all duration-500 ease-out"
-            style={{
-              transformStyle: "preserve-3d",
-              transform: `rotateX(${rotationDegree}deg) translateZ(0px)`,
-              boxShadow: `0 0 60px -10px ${currentTab.color}44`,
-            }}
-          >
-            <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[500px]">
-              {/* Left Media Block */}
-              <div className="lg:col-span-6 relative bg-zinc-900 min-h-[300px] lg:min-h-full overflow-hidden flex items-center justify-center">
+        {/* 3D Split Spinner Stage */}
+        <div className="relative w-full min-h-[480px]" style={{ perspective: "1800px" }}>
+          <div className="relative w-full h-full min-h-[480px] grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-0">
+            {/* ================= LEFT SPINNER (Media & Title) ================= */}
+            <div
+              className={`relative h-[480px] rounded-t-3xl lg:rounded-l-3xl lg:rounded-tr-none overflow-hidden transition-transform duration-1000 ease-in-out`}
+              style={{
+                transformStyle: "preserve-3d",
+                transform:
+                  spinDirection === "fwd"
+                    ? "rotateX(-90deg)"
+                    : spinDirection === "bwd"
+                    ? "rotateX(90deg)"
+                    : "rotateX(0deg)",
+              }}
+            >
+              {/* Active Face Left */}
+              <div
+                className="absolute inset-0 w-full h-full bg-zinc-900 overflow-hidden flex flex-col justify-end p-8 border-l border-t border-b border-zinc-800"
+                style={{
+                  backfaceVisibility: "hidden",
+                  transform: "translateZ(240px)",
+                }}
+              >
                 {currentTab.mediaType === "video" && currentTab.mediaUrl ? (
                   <video
                     key={currentTab.mediaUrl}
@@ -230,84 +246,179 @@ export default function ProjectsCarousel() {
                     muted
                     loop
                     playsInline
-                    className="w-full h-full object-cover"
+                    className="absolute inset-0 w-full h-full object-cover"
                   >
                     <source src={currentTab.mediaUrl} type="video/mp4" />
                   </video>
                 ) : currentTab.mediaUrl ? (
-                  <div className="relative w-full h-full min-h-[340px]">
-                    <Image
-                      src={currentTab.mediaUrl}
-                      alt={currentTab.title}
-                      fill
-                      className="object-cover transition-transform duration-700 hover:scale-105"
-                      priority
-                    />
-                  </div>
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center p-8 bg-zinc-900">
-                    <span className="text-zinc-600 font-mono text-sm">3D Media Preview</span>
-                  </div>
-                )}
+                  <Image
+                    src={currentTab.mediaUrl}
+                    alt={currentTab.title}
+                    fill
+                    className="object-cover"
+                    priority
+                  />
+                ) : null}
 
-                {/* Title badge overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent p-6 sm:p-8 flex flex-col justify-end">
-                  <span
-                    className="text-xs uppercase font-mono tracking-widest px-3 py-1 rounded-md bg-black/70 backdrop-blur-md border border-white/10 w-fit text-white mb-2"
-                    style={{ borderLeftColor: currentTab.color, borderLeftWidth: "4px" }}
-                  >
-                    {currentTab.subtitle}
-                  </span>
-                  <h3 className="text-4xl sm:text-5xl font-black text-white tracking-tight">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+
+                <div className="relative z-10">
+                  <h3 className="text-4xl sm:text-5xl font-black text-white uppercase tracking-tight">
                     {currentTab.title}
                   </h3>
+                  <p className="text-lg font-bold text-white/90 mt-1 uppercase tracking-wider">
+                    {currentTab.subtitle}
+                  </p>
                 </div>
               </div>
 
-              {/* Right Content Block */}
-              <div className="lg:col-span-6 p-6 sm:p-10 flex flex-col justify-between space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-3">
-                    <div
-                      className="w-3.5 h-9 rounded-full shadow-lg"
-                      style={{ backgroundColor: currentTab.color }}
+              {/* Incoming Face Left */}
+              {incomingTab && (
+                <div
+                  className="absolute inset-0 w-full h-full bg-zinc-900 overflow-hidden flex flex-col justify-end p-8 border-l border-t border-b border-zinc-800"
+                  style={{
+                    backfaceVisibility: "hidden",
+                    transform:
+                      spinDirection === "fwd"
+                        ? "rotateX(90deg) translateZ(240px)"
+                        : "rotateX(-90deg) translateZ(240px)",
+                  }}
+                >
+                  {incomingTab.mediaType === "video" && incomingTab.mediaUrl ? (
+                    <video
+                      key={incomingTab.mediaUrl}
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      className="absolute inset-0 w-full h-full object-cover"
+                    >
+                      <source src={incomingTab.mediaUrl} type="video/mp4" />
+                    </video>
+                  ) : incomingTab.mediaUrl ? (
+                    <Image
+                      src={incomingTab.mediaUrl}
+                      alt={incomingTab.title}
+                      fill
+                      className="object-cover"
                     />
-                    <h4 className="text-2xl font-bold text-white tracking-wide">
-                      {currentTab.subtitle}
-                    </h4>
-                  </div>
+                  ) : null}
 
-                  <div className="space-y-3 text-zinc-300 text-sm sm:text-base leading-relaxed">
-                    {currentTab.description.map((paragraph, idx) => (
-                      <p key={idx}>{paragraph}</p>
-                    ))}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+
+                  <div className="relative z-10">
+                    <h3 className="text-4xl sm:text-5xl font-black text-white uppercase tracking-tight">
+                      {incomingTab.title}
+                    </h3>
+                    <p className="text-lg font-bold text-white/90 mt-1 uppercase tracking-wider">
+                      {incomingTab.subtitle}
+                    </p>
                   </div>
                 </div>
+              )}
+            </div>
 
-                {/* Contact Actions */}
-                <div className="pt-4 border-t border-zinc-800/80 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* ================= RIGHT SPINNER (Content & Actions) ================= */}
+            <div
+              className={`relative h-[480px] rounded-b-3xl lg:rounded-r-3xl lg:rounded-bl-none overflow-hidden transition-transform duration-1000 ease-in-out`}
+              style={{
+                transformStyle: "preserve-3d",
+                transform:
+                  spinDirection === "fwd"
+                    ? "rotateX(90deg)"
+                    : spinDirection === "bwd"
+                    ? "rotateX(-90deg)"
+                    : "rotateX(0deg)",
+              }}
+            >
+              {/* Active Face Right */}
+              <div
+                className="absolute inset-0 w-full h-full p-8 sm:p-10 flex flex-col justify-between border-r border-t border-b border-zinc-800"
+                style={{
+                  backgroundColor: currentTab.color,
+                  backfaceVisibility: "hidden",
+                  transform: "translateZ(240px)",
+                }}
+              >
+                <div className="space-y-4 overflow-y-auto max-h-[320px] pr-2">
+                  {currentTab.description.map((para, idx) => (
+                    <p
+                      key={idx}
+                      className="text-white text-base leading-relaxed font-normal text-justify"
+                    >
+                      {para}
+                    </p>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/20">
                   <a
                     href="mailto:dashika.buksina@gmail.com?subject=Запит site DigitalKiss"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center space-x-2 px-6 py-4 rounded-2xl font-bold text-sm text-white transition-all duration-300 hover:scale-105 shadow-xl"
-                    style={{ backgroundColor: currentTab.color }}
+                    className="flex items-center justify-center space-x-2 py-3 px-4 rounded-2xl bg-black/40 hover:bg-black/60 border border-white/30 text-white font-bold text-sm transition-all hover:scale-105"
                   >
                     <Mail size={18} />
-                    <span>EMAIL CONSULTATION</span>
+                    <span>EMAIL</span>
                   </a>
                   <a
                     href="https://t.me/digitalkiss_IT"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center space-x-2 px-6 py-4 rounded-2xl font-bold text-sm text-white transition-all duration-300 hover:scale-105 shadow-xl border border-white/20"
-                    style={{ backgroundColor: currentTab.color }}
+                    className="flex items-center justify-center space-x-2 py-3 px-4 rounded-2xl bg-black/40 hover:bg-black/60 border border-white/30 text-white font-bold text-sm transition-all hover:scale-105"
                   >
                     <Send size={18} />
                     <span>TELEGRAM</span>
                   </a>
                 </div>
               </div>
+
+              {/* Incoming Face Right */}
+              {incomingTab && (
+                <div
+                  className="absolute inset-0 w-full h-full p-8 sm:p-10 flex flex-col justify-between border-r border-t border-b border-zinc-800"
+                  style={{
+                    backgroundColor: incomingTab.color,
+                    backfaceVisibility: "hidden",
+                    transform:
+                      spinDirection === "fwd"
+                        ? "rotateX(270deg) translateZ(240px)"
+                        : "rotateX(-90deg) translateZ(240px)",
+                  }}
+                >
+                  <div className="space-y-4 overflow-y-auto max-h-[320px] pr-2">
+                    {incomingTab.description.map((para, idx) => (
+                      <p
+                        key={idx}
+                        className="text-white text-base leading-relaxed font-normal text-justify"
+                      >
+                        {para}
+                      </p>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/20">
+                    <a
+                      href="mailto:dashika.buksina@gmail.com?subject=Запит site DigitalKiss"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center space-x-2 py-3 px-4 rounded-2xl bg-black/40 hover:bg-black/60 border border-white/30 text-white font-bold text-sm transition-all hover:scale-105"
+                    >
+                      <Mail size={18} />
+                      <span>EMAIL</span>
+                    </a>
+                    <a
+                      href="https://t.me/digitalkiss_IT"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center space-x-2 py-3 px-4 rounded-2xl bg-black/40 hover:bg-black/60 border border-white/30 text-white font-bold text-sm transition-all hover:scale-105"
+                    >
+                      <Send size={18} />
+                      <span>TELEGRAM</span>
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
