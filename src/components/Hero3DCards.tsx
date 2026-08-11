@@ -56,6 +56,7 @@ export default function Hero3DCards() {
   const [rotate, setRotate] = useState({ x: 11, y: 16.5 });
   const [translate, setTranslate] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     const range = 35;
@@ -64,20 +65,60 @@ export default function Hero3DCards() {
     const handleMouseMove = (e: MouseEvent) => {
       cancelAnimationFrame(animFrame);
       animFrame = requestAnimationFrame(() => {
-        const xValue = ((e.clientX / window.innerWidth) * range - range / 2);
-        const yValue = ((e.clientY / window.innerHeight) * range - range / 2);
+        const xValue = (e.clientX / window.innerWidth) * range - range / 2;
+        const yValue = (e.clientY / window.innerHeight) * range - range / 2;
 
         setRotate({ x: -yValue * 0.8, y: xValue * 0.8 });
         setTranslate({ x: xValue, y: yValue });
       });
     };
 
+    const handleDeviceOrientation = (e: DeviceOrientationEvent) => {
+      const gamma = e.gamma;
+      const beta = e.beta;
+      if (typeof gamma === "number" && typeof beta === "number") {
+        cancelAnimationFrame(animFrame);
+        animFrame = requestAnimationFrame(() => {
+          const xValue = (gamma / 90) * (range / 2);
+          const yValue = (beta / 90) * (range / 2);
+
+          setRotate({ x: -yValue * 0.8, y: xValue * 0.8 });
+          setTranslate({ x: xValue, y: yValue });
+        });
+      }
+    };
+
     window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("deviceorientation", handleDeviceOrientation);
+
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("deviceorientation", handleDeviceOrientation);
       cancelAnimationFrame(animFrame);
     };
   }, []);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length > 0) {
+      touchStartRef.current = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+      };
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartRef.current || e.touches.length === 0) return;
+    const range = 35;
+    const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
+
+    const xValue = (currentX / window.innerWidth) * range - range / 2;
+    const yValue = (currentY / window.innerHeight) * range - range / 2;
+
+    setRotate({ x: -yValue * 0.9, y: xValue * 0.9 });
+    setTranslate({ x: xValue, y: yValue });
+  };
 
   return (
     <section className="relative min-h-[90vh] pt-32 pb-16 flex flex-col justify-center items-center overflow-hidden">
@@ -89,18 +130,20 @@ export default function Hero3DCards() {
           DIGITAL<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400">KISS</span>
         </h1>
         <p className="text-gray-400 text-sm md:text-base max-w-2xl mx-auto uppercase tracking-widest font-mono">
-          Development of Games • Websites • Mobile Apps • NFT & Design
+          Development of Games • Websites • Mobile Apps • NFT &amp; Design
         </p>
       </div>
 
-      {/* 3D Perspective Cards Container */}
+      {/* 3D Perspective Cards Container with Touch Drag Support */}
       <div
         ref={containerRef}
-        className="w-full max-w-6xl px-4 flex justify-center py-6"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        className="w-full max-w-6xl px-4 flex justify-center py-6 touch-pan-y"
         style={{ perspective: "1800px" }}
       >
         <div
-          className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 w-full max-w-5xl transition-transform duration-150 ease-out"
+          className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 w-full max-w-5xl transition-transform duration-200 ease-out"
           style={{
             transformStyle: "preserve-3d",
             transform: `rotateX(${rotate.x}deg) rotateY(${rotate.y}deg)`,

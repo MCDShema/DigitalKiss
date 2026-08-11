@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { Mail, Send, ChevronUp, ChevronDown } from "lucide-react";
+import { Mail, Send, ChevronUp, ChevronDown, Hand } from "lucide-react";
 
 interface ProjectTab {
   id: string;
@@ -122,6 +122,10 @@ export default function ProjectsCarousel() {
   const [spinDirection, setSpinDirection] = useState<"fwd" | "bwd" | null>(null);
   const [isSpinning, setIsSpinning] = useState(false);
 
+  // Touch swipe refs
+  const touchStartY = useRef<number | null>(null);
+  const touchStartX = useRef<number | null>(null);
+
   const spinTo = (targetIdx: number) => {
     if (isSpinning || targetIdx === activeIndex) return;
 
@@ -130,7 +134,6 @@ export default function ProjectsCarousel() {
     setSpinDirection(dir);
     setIsSpinning(true);
 
-    // After 3D rotation duration (1000ms), finalize active tab
     setTimeout(() => {
       setActiveIndex(targetIdx);
       setNextIndex(null);
@@ -149,6 +152,44 @@ export default function ProjectsCarousel() {
     spinTo(prevIdx);
   };
 
+  // Touch Swipe Handlers for Mobile & Tablet
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length > 0) {
+      touchStartY.current = e.touches[0].clientY;
+      touchStartX.current = e.touches[0].clientX;
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY.current === null || touchStartX.current === null) return;
+    const endY = e.changedTouches[0].clientY;
+    const endX = e.changedTouches[0].clientX;
+
+    const diffY = touchStartY.current - endY;
+    const diffX = touchStartX.current - endX;
+
+    const threshold = 40; // minimum drag distance in px
+
+    if (Math.abs(diffY) > Math.abs(diffX)) {
+      // Vertical swipe
+      if (diffY > threshold) {
+        handleNext(); // Swipe Up -> Next Tab
+      } else if (diffY < -threshold) {
+        handlePrev(); // Swipe Down -> Prev Tab
+      }
+    } else {
+      // Horizontal swipe
+      if (diffX > threshold) {
+        handleNext(); // Swipe Left -> Next Tab
+      } else if (diffX < -threshold) {
+        handlePrev(); // Swipe Right -> Prev Tab
+      }
+    }
+
+    touchStartY.current = null;
+    touchStartX.current = null;
+  };
+
   useEffect(() => {
     const handleKeyUp = (e: KeyboardEvent) => {
       if (e.keyCode === 40 || e.keyCode === 39) handleNext(); // Down / Right
@@ -162,10 +203,14 @@ export default function ProjectsCarousel() {
   const incomingTab = nextIndex !== null ? TABS[nextIndex] : null;
 
   return (
-    <section id="projects" className="py-16 relative z-10">
+    <section id="projects" className="py-16 relative z-10 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-end mb-8 border-b border-zinc-800 pb-4">
           <div>
+            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-mono uppercase tracking-widest mb-2">
+              <Hand size={14} className="animate-bounce" />
+              <span>TOUCH / SWIPE 3D SPINNER</span>
+            </div>
             <h2 className="text-3xl sm:text-5xl font-extrabold uppercase tracking-tight text-white">
               PROJECTS
             </h2>
@@ -215,8 +260,13 @@ export default function ProjectsCarousel() {
           })}
         </div>
 
-        {/* 3D Split Spinner Stage */}
-        <div className="relative w-full min-h-[480px]" style={{ perspective: "1800px" }}>
+        {/* 3D Split Spinner Stage with Touch Swipe Gestures */}
+        <div
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          className="relative w-full min-h-[480px] touch-pan-y cursor-grab active:cursor-grabbing select-none"
+          style={{ perspective: "1800px" }}
+        >
           <div className="relative w-full h-full min-h-[480px] grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-0">
             {/* ================= LEFT SPINNER (Media & Title) ================= */}
             <div
