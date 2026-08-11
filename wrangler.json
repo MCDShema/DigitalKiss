@@ -1,7 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "digitalkiss",
-  "account_id": "d9a58c1ee46122c0d0826127e81132a6",
   "compatibility_date": "2026-08-11",
   "workers_dev": true,
   "assets": {
