@@ -1,6 +1,5 @@
 "use client";
 
-import ParticlesBackground from "@/components/ParticlesBackground";
 import Header from "@/components/Header";
 import Hero3DCards from "@/components/Hero3DCards";
 import ProjectsCarousel from "@/components/ProjectsCarousel";
@@ -11,10 +10,7 @@ import Footer from "@/components/Footer";
 
 export default function Home() {
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-zinc-950 via-zinc-900 to-black text-white overflow-hidden">
-      {/* Background Interactive Particles */}
-      <ParticlesBackground />
-
+    <div className="relative min-h-screen bg-zinc-950 text-white overflow-x-hidden">
       {/* Header */}
       <Header />
 
