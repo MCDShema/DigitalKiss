@@ -41,6 +41,13 @@ export default function RootLayout({
       lang="uk"
       className="dark scroll-smooth"
     >
+      <head>
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3364598774522513"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body className="bg-zinc-950 text-zinc-100 font-sans min-h-screen selection:bg-cyan-500 selection:text-white antialiased overflow-x-hidden">
         {children}
       </body>
